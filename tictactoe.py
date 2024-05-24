@@ -1,95 +1,166 @@
-import random
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <style>
+    body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color:#c5c6c7;
+}
 
-# Constants
-EMPTY = "-"
-PLAYER_X = "X"
-PLAYER_O = "O"
-TIE = "TIE"
-SIZE = 9
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+}
 
-# Initialize game state
-board = [EMPTY] * SIZE
-current_player = PLAYER_X
-game_running = True
-winner = None
+.cell {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #000;
+    font-size: 2em;
+    background-color:#b3b4bd ;
+    transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-# Print the game board
-def print_board():
-    for i in range(0, SIZE, 3):
-        print(" | ".join(board[i:i+3]))
-        if i < 6:
-            print("---------")
+.cell:hover {
+    background-color: #adbbda;
+    cursor: pointer;
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
 
-# Get player input
-def player_input():
-    while True:
-        try:
-            inp = int(input("Enter a position (1-9): ")) - 1
-            if 0 <= inp < SIZE and board[inp] == EMPTY:
-                board[inp] = current_player
-                break
-            else:
-                print("Invalid input or position already occupied. Try again.")
-        except ValueError:
-            print("Invalid input. Please enter a number between 1 and 9.")
+.cell.X {
+    color: blue;
+}
 
-# Check for a winner
-def check_winner():
-    global winner
-    win_conditions = [
-        # Horizontal lines
-        (0, 1, 2),
-        (3, 4, 5),
-        (6, 7, 8),
-        # Vertical lines
-        (0, 3, 6),
-        (1, 4, 7),
-        (2, 5, 8),
-        # Diagonal lines
-        (0, 4, 8),
-        (2, 4, 6)
-    ]
-    for a, b, c in win_conditions:
-        if board[a] == board[b] == board[c] and board[a] != EMPTY:
-            winner = board[a]
-            return True
-    return False
+.cell.O {
+    color: red;
+}
 
-# Check for a tie
-def check_tie():
-    global game_running
-    if EMPTY not in board:
-        print_board()
-        print("It's a tie!")
-        game_running = False
+.hidden {
+    display: none;
+}
 
-# Switch the current player
-def switch_player():
-    global current_player
-    current_player = PLAYER_X if current_player == PLAYER_O else PLAYER_O
+h1, p {
+    text-align: center;
+}
 
-# Computer move
-def computer_move():
-    while current_player == PLAYER_O and game_running:
-        position = random.randint(0, SIZE - 1)
-        if board[position] == EMPTY:
-            board[position] = PLAYER_O
-            switch_player()
-            break
+</style>
+    
+</head>
+<body>
+    <h1>Tic-Tac-Toe</h1>
+    <div class="board" id="board"></div>
+    <p id="message"></p>
+    <script>
+        const EMPTY = "-";
+        const PLAYER_X = "X";
+        const PLAYER_O = "O";
+        const SIZE = 9;
 
-# Main game loop
-while game_running:
-    print_board()
-    player_input()
-    if check_winner():
-        print_board()
-        print(f"The winner is {winner}!")
-        break
-    check_tie()
-    switch_player()
-    computer_move()
-    if check_winner():
-        print_board()
-        print(f"The winner is {winner}!")
-        break
-    check_tie()
+        let board = Array(SIZE).fill(EMPTY);
+        let currentPlayer = PLAYER_X;
+        let gameRunning = true;
+        let winner = null;
+
+        const boardElement = document.getElementById('board');
+        const messageElement = document.getElementById('message');
+
+        function createBoard() {
+            boardElement.innerHTML = '';
+            board.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.classList.add('cell');
+                cellElement.textContent = cell;
+                cellElement.addEventListener('click', () => playerMove(index));
+                boardElement.appendChild(cellElement);
+            });
+        }
+
+        function printBoard() {
+            createBoard();
+        }
+
+        function playerMove(index) {
+            if (board[index] === EMPTY && gameRunning) {
+                board[index] = currentPlayer;
+                printBoard();
+                if (checkWinner()) {
+                    messageElement.textContent = `The winner is ${winner}!`;
+                    gameRunning = false;
+                } else if (checkTie()) {
+                    messageElement.textContent = "It's a tie!";
+                    gameRunning = false;
+                } else {
+                    switchPlayer();
+                    if (currentPlayer === PLAYER_O) {
+                        setTimeout(computerMove, 500);
+                    }
+                }
+            }
+        }
+
+        function checkWinner() {
+            const winConditions = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [0, 4, 8],
+                [2, 4, 6]
+            ];
+            for (const condition of winConditions) {
+                const [a, b, c] = condition;
+                if (board[a] === board[b] && board[b] === board[c] && board[a] !== EMPTY) {
+                    winner = board[a];
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkTie() {
+            return board.every(cell => cell !== EMPTY);
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === PLAYER_X ? PLAYER_O : PLAYER_X;
+        }
+
+        function computerMove() {
+            if (!gameRunning) return;
+            let position;
+            do {
+                position = Math.floor(Math.random() * SIZE);
+            } while (board[position] !== EMPTY);
+            board[position] = PLAYER_O;
+            printBoard();
+            if (checkWinner()) {
+                messageElement.textContent = `The winner is ${winner}!`;
+                gameRunning = false;
+            } else if (checkTie()) {
+                messageElement.textContent = "It's a tie!";
+                gameRunning = false;
+            } else {
+                switchPlayer();
+            }
+        }
+
+        printBoard();
+    </script>
+</body>
+</html>
